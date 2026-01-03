@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Database
+*.db
+*.sqlite3
+
+# Data Files (Download/regenerate via scripts)
+*.csv
+# Keep only critical small data if necessary, but generally ignore large sets
+final_training_set.csv
+final_training_set_v2.csv
+space_weather_features.csv
+
+# Logs
+*.log
+
+# IDE Settings
+.vscode/
+.idea/
+
+# Environment Variables
+.env
+.env.local
+
+# OS Files
+.DS_Store
+Thumbs.db

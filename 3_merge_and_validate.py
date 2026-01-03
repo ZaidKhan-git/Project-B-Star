@@ -7,7 +7,7 @@ import logging
 
 # --- CONFIGURATION ---
 DB_NAME = "satellite_data.db"
-OUTPUT_FILE = "final_training_set.csv"
+OUTPUT_FILE = "final_training_set_v2.csv"  # UPGRADED TO V2 WITH F10.7 AND BC
 
 # Updated "Golden Dataset"
 TARGET_SATELLITES = [
@@ -86,6 +86,17 @@ def run_merge_pipeline():
     except Exception as e:
         logger.error(f"Failed to load weather features: {e}")
         return
+    
+    # 1b. LOAD F10.7 SOLAR FLUX (NEW - S-TIER PHYSICS)
+    print("   ↳ Loading F10.7 Solar Flux...")
+    try:
+        f107_df = pd.read_sql("SELECT * FROM solar_flux", conn)
+        f107_df['date_key'] = pd.to_datetime(f107_df['date_tag']).dt.date
+        print(f"     - Loaded {len(f107_df)} F10.7 records")
+    except Exception as e:
+        logger.warning(f"Failed to load F10.7 data: {e}")
+        logger.warning("Continuing without F10.7 features - run ingestion first!")
+        f107_df = pd.DataFrame()
 
     # 2. LOAD ORBITAL DATA (Stream 1)
     print("   ↳ Loading Raw TLEs...")
@@ -215,15 +226,81 @@ def run_merge_pipeline():
         how='inner'
     )
     
-    # 8. FINAL CLEANUP
-    # Drop rows with NaN in critical lag features
+    # 7b. MERGE F10.7 SOLAR FLUX (NEW)
+    if not f107_df.empty:
+        print("   ↳ Merging F10.7 Solar Flux...")
+        final_df = pd.merge(
+            final_df,
+            f107_df[['date_key', 'f107_obs', 'f107_adj']],
+            on='date_key',
+            how='left'
+        )
+        print(f"     - {final_df['f107_obs'].notna().sum()} rows have F10.7 data")
+    else:
+        final_df['f107_obs'] = np.nan
+        final_df['f107_adj'] = np.nan
+    
+    # 8. PHYSICS-INFORMED FEATURE ENGINEERING (S-TIER BC CALCULATION)
+    print("   ↳ Calculating Physics Features (Density Proxy & Ballistic Coefficient)...")
+    
+    # Step 1: Calculate Density Proxy
+    # Formula: F10.7 drives EUV heating, Kp drives storm expansion
+    # Altitude cubed approximates inverse density distribution
+    if 'f107_obs' in final_df.columns and final_df['f107_obs'].notna().sum() > 0:
+        final_df['density_proxy'] = (
+            final_df['f107_obs'] * final_df['Kp_mean'] / 
+            (final_df['altitude_km'] ** 3)
+        )
+        
+        # Step 2: Calculate Observed BC (per row)
+        # Ballistic Coefficient from drag equation: decay_rate ∝ density × BC
+        # Therefore: BC ∝ decay_rate / density
+        final_df['observed_bc'] = final_df['decay_rate_m'] / final_df['density_proxy']
+        
+        # Step 3: Calculate Static BC per satellite (TRAINING DATA ONLY)
+        # Filter out maneuvers and outliers for clean median
+        training_mask = (
+            (final_df['is_maneuver'] == False) &
+            (final_df['decay_rate_m'] > 0.01) &
+            (final_df['decay_rate_m'] < 2000) &
+            (final_df['observed_bc'].notna()) &
+            (final_df['observed_bc'] > 0) &  # Positive BC only
+            (final_df['observed_bc'] < 1e10)  # Remove infinite values
+        )
+        
+        bc_stats = final_df[training_mask].groupby('norad_id').agg({
+            'observed_bc': 'median'
+        }).reset_index()
+        bc_stats = bc_stats.rename(columns={'observed_bc': 'static_bc_est'})
+        
+        # Merge back to full dataset
+        final_df = pd.merge(
+            final_df,
+            bc_stats,
+            on='norad_id',
+            how='left'
+        )
+        
+        print(f"     - Calculated BC for {len(bc_stats)} satellites")
+        print(f"     - BC statistics:")
+        for _, row in bc_stats.iterrows():
+            print(f"       • Satellite {row['norad_id']}: BC = {row['static_bc_est']:.6e}")
+    else:
+        print("     ⚠️ No F10.7 data available - skipping BC calculation")
+        final_df['density_proxy'] = np.nan
+        final_df['observed_bc'] = np.nan
+        final_df['static_bc_est'] = np.nan
+    
+    # 9. FINAL CLEANUP
+    # Drop rows with NaN in critical lag features (but keep F10.7 nans for now)
     lag_cols = [c for c in final_df.columns if 'Kp_' in c]
     final_df = final_df.dropna(subset=lag_cols)
     
     cols_to_keep = [
         'date_key', 'norad_id', 'satellite_name', 'altitude_km', 'semi_major_axis_km', 'decay_rate_m', 
         'is_maneuver', 'sin_doy', 'cos_doy',
-        'eccentricity', 'perigee_alt_km', 'mean_motion', 'is_circular'
+        'eccentricity', 'perigee_alt_km', 'mean_motion', 'is_circular',
+        'f107_obs', 'f107_adj', 'static_bc_est'  # NEW COLUMNS
     ] + lag_cols
     
     # Select available columns

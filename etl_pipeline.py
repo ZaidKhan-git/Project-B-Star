@@ -784,40 +784,72 @@ class SpaceWeatherIngestor:
         logger.info(f"Stored {inserted} Solar Flux records")
         return inserted
 
-    def fetch_historical_kp(self, start_year: int = 2014, end_year: int = 2025) -> int:
+    def fetch_historical_kp_and_f107(self, start_year: int = 2014, end_year: int = 2026) -> dict:
         """
-        Fetch historical Kp index data from GFZ Potsdam archive. [NEW]
+        Fetch historical Kp AND F10.7 data from GFZ Potsdam archive. [UPGRADED]
         
-        This provides Kp data for training ML models across a full solar cycle
-        (Solar Minimum ~2019-2020 to Solar Maximum ~2024-2025).
+        This provides both Kp and F10.7 solar flux data for training ML models
+        across a full solar cycle (Solar Minimum ~2019-2020 to Solar Maximum ~2024-2025).
         
-        Data Source: GFZ Potsdam Kp Index Master File (since 1932)
+        Data Source: GFZ Potsdam Master File (since 1932)
+        URL: https://www-app3.gfz-potsdam.de/kp_index/Kp_ap_Ap_SN_F107_since_1932.txt
         
         Args:
             start_year: First year to include (default: 2014)
-            end_year: Last year to include (default: 2025)
+            end_year: Last year to include (default: 2026)
             
         Returns:
-            Total number of records stored
+            Dict with 'kp_records' and 'f107_records' counts
         """
-        # Single master file containing all data since 1932
-        MASTER_URL = "https://www-app3.gfz-potsdam.de/kp_index/Kp_ap_Ap_SN_F107_since_1932.txt"
-        total_stored = 0
+        # =====================================================================
+        # CACHE-FIRST CHECK - Avoid unnecessary API calls
+        # =====================================================================
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            
+            # Check if we already have Kp data for this range
+            cursor.execute("""
+                SELECT COUNT(*) FROM space_weather 
+                WHERE time_tag >= ? AND time_tag < ?
+            """, (f"{start_year}-01-01", f"{end_year + 1}-01-01"))
+            kp_count = cursor.fetchone()[0]
+            
+            # Check if we already have F10.7 data for this range
+            cursor.execute("""
+                SELECT COUNT(*) FROM solar_flux 
+                WHERE date_tag >= ? AND date_tag < ?
+            """, (f"{start_year}-01-01", f"{end_year + 1}-01-01"))
+            f107_count = cursor.fetchone()[0]
         
-        logger.info(f"Fetching historical Kp data from GFZ master file")
-        print(f"    ↳ Downloading complete Kp archive from GFZ Potsdam...")
+        if kp_count > 0 and f107_count > 0:
+            print(f"    [CACHE HIT] Found {kp_count} Kp records and {f107_count} F10.7 records for {start_year}-{end_year}.")
+            print(f"    └── Skipping download. Use force_refresh=True to re-download.")
+            logger.info(f"[CACHE HIT] Kp: {kp_count} records, F10.7: {f107_count} records")
+            return {'kp_records': kp_count, 'f107_records': f107_count}
+        
+        # =====================================================================
+        # NO CACHE - PROCEED WITH DOWNLOAD
+        # =====================================================================
+        MASTER_URL = "https://www-app3.gfz-potsdam.de/kp_index/Kp_ap_Ap_SN_F107_since_1932.txt"
+        total_kp_stored = 0
+        total_f107_stored = 0
+        
+        logger.info(f"Fetching historical Kp + F10.7 data from GFZ master file ({start_year}-{end_year})")
+        print(f"    ↳ Downloading Kp + F10.7 archive from GFZ Potsdam...")
         
         try:
             response = requests.get(MASTER_URL, timeout=120)
             
             if response.status_code != 200:
                 logger.error(f"Failed to fetch master file: HTTP {response.status_code}")
-                return 0
+                return {'kp_records': 0, 'f107_records': 0}
             
             print(f"    ✓ Downloaded {len(response.text) // 1024} KB of historical data")
             
             # Parse the fixed-width format file
-            records = []
+            kp_records = []
+            f107_records = []
+            
             for line in response.text.strip().split('\n'):
                 # Skip header/comment lines
                 if line.startswith('#') or not line.strip():
@@ -825,10 +857,11 @@ class SpaceWeatherIngestor:
                 
                 try:
                     parts = line.split()
-                    if len(parts) < 8:
+                    if len(parts) < 20:  # Need at least 20 columns for F10.7obs
                         continue
                     
-                    # Format: YYYY MM DD days days_m Bsr dB Kp1 Kp2 Kp3 Kp4 Kp5 Kp6 Kp7 Kp8 ...
+                    # Format: YYYY MM DD days days_m Bsr dB Kp1 Kp2 Kp3 Kp4 Kp5 Kp6 Kp7 Kp8 Ap Cp C9 Isr F107obs F107adj
+                    # Index:    0   1  2   3     4     5  6   7   8   9  10  11  12  13  14  15 16 17  18   19      20
                     yr = int(parts[0])
                     month = int(parts[1])
                     day = int(parts[2])
@@ -837,7 +870,7 @@ class SpaceWeatherIngestor:
                     if yr < start_year or yr > end_year:
                         continue
                     
-                    # Kp values are at indices 7-14 (8 3-hour periods per day)
+                    # === PARSE KP VALUES (indices 7-14) ===
                     kp_values = []
                     for i in range(7, min(15, len(parts))):
                         try:
@@ -852,26 +885,62 @@ class SpaceWeatherIngestor:
                         for idx, kp in enumerate(kp_values):
                             hour = idx * 3
                             time_tag = f"{yr:04d}-{month:02d}-{day:02d}T{hour:02d}:00:00+00:00"
-                            records.append({
+                            kp_records.append({
                                 'time_tag': time_tag,
                                 'kp': kp,
                                 'kp_fraction': kp - int(kp),
                                 'a_running': None,
                                 'station_count': None
                             })
+                    
+                    # === PARSE F10.7 VALUES (Indices 25-26, previously thought 19-20) ===
+                    # Structure: Date(0-2) Meta(3-6) Kp(7-14) ap(15-22) Ap(23) SN(24) F10.7obs(25) F10.7adj(26)
+                    try:
+                        f107_obs = float(parts[25]) if len(parts) > 25 else None
+                        f107_adj = float(parts[26]) if len(parts) > 26 else None
+                        
+                        # Quality filter: F10.7 should be in realistic range (50-400 SFU)
+                        # Negative values indicate missing data
+                        if f107_obs and f107_obs > 0 and 50 <= f107_obs <= 400:
+                            date_tag = f"{yr:04d}-{month:02d}-{day:02d}"
+                            f107_records.append({
+                                'date_tag': date_tag,
+                                'f107_obs': f107_obs,
+                                'f107_adj': f107_adj if f107_adj and f107_adj > 0 else f107_obs
+                            })
+                    except (ValueError, IndexError):
+                        pass
+                    
                 except (ValueError, IndexError):
                     continue
             
-            if records:
-                df = pd.DataFrame(records)
-                total_stored = self._store_kp_data(df)
-                print(f"    ✓ Stored {total_stored} Kp records ({start_year}-{end_year})")
+            # Store Kp data
+            if kp_records:
+                df_kp = pd.DataFrame(kp_records)
+                total_kp_stored = self._store_kp_data(df_kp)
+                print(f"    ✓ Stored {total_kp_stored} Kp records ({start_year}-{end_year})")
+            
+            # Store F10.7 data
+            if f107_records:
+                df_f107 = pd.DataFrame(f107_records)
+                total_f107_stored = self._store_f107_data(df_f107)
+                print(f"    ✓ Stored {total_f107_stored} F10.7 records ({start_year}-{end_year})")
                 
         except requests.RequestException as e:
-            logger.error(f"Failed to fetch historical Kp data: {e}")
+            logger.error(f"Failed to fetch historical data: {e}")
         
-        logger.info(f"Total historical Kp records stored: {total_stored}")
-        return total_stored
+        logger.info(f"Total records stored - Kp: {total_kp_stored}, F10.7: {total_f107_stored}")
+        return {'kp_records': total_kp_stored, 'f107_records': total_f107_stored}
+    
+    # Keep old method name for backwards compatibility
+    def fetch_historical_kp(self, start_year: int = 2014, end_year: int = 2026) -> int:
+        """
+        Backwards compatibility wrapper for fetch_historical_kp_and_f107.
+        Returns only Kp record count.
+        """
+        result = self.fetch_historical_kp_and_f107(start_year, end_year)
+        return result['kp_records']
+    
     
     def _store_kp_data(self, df: pd.DataFrame) -> int:
         """
@@ -901,19 +970,68 @@ class SpaceWeatherIngestor:
                         VALUES (?, ?, ?, ?, ?)
                     """, (
                         time_tag,
-                        # Handle both 'Kp' (live data) and 'kp' (historical data)
-                        float(row.get('Kp', row.get('kp', 0))) if pd.notna(row.get('Kp', row.get('kp'))) else 0.0,
-                        float(row.get('Kp_fraction', row.get('kp_fraction', 0))) if pd.notna(row.get('Kp_fraction', row.get('kp_fraction'))) else None,
-                        float(row.get('a_running', 0)) if pd.notna(row.get('a_running')) else None,
-                        int(row.get('station_count', 0)) if pd.notna(row.get('station_count')) else None
+                        float(row['kp']) if pd.notna(row['kp']) else None,
+                        float(row.get('kp_fraction', 0)) if pd.notna(row.get('kp_fraction')) else None,
+                        float(row.get('a_running')) if pd.notna(row.get('a_running')) else None,
+                        int(row.get('station_count')) if pd.notna(row.get('station_count')) else None
                     ))
-                    records_inserted += 1
                     
-                except (sqlite3.Error, ValueError, TypeError) as e:
+                    if cursor.rowcount > 0:
+                        records_inserted += 1
+                        
+                except (sqlite3.Error, ValueError) as e:
                     logger.warning(f"Failed to insert Kp record: {e}")
                     
             conn.commit()
         
+        return records_inserted
+    
+    def _store_f107_data(self, df: pd.DataFrame) -> int:
+        """
+        Store F10.7 solar flux records to SQLite database. [NEW]
+        
+        Uses date_tag as primary key to prevent duplicates.
+        Applies data integrity filters: 50 <= F10.7 <= 400 SFU
+        
+        Args:
+            df: DataFrame with columns ['date_tag', 'f107_obs', 'f107_adj']
+            
+        Returns:
+            Number of records inserted
+        """
+        records_inserted = 0
+        
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            
+            for _, row in df.iterrows():
+                try:
+                    f107_obs = float(row['f107_obs']) if pd.notna(row['f107_obs']) else None
+                    f107_adj = float(row['f107_adj']) if pd.notna(row['f107_adj']) else None
+                    
+                    # Quality filter: Skip invalid values
+                    if not f107_obs or f107_obs < 50 or f107_obs > 400:
+                        continue
+                    
+                    cursor.execute("""
+                        INSERT OR REPLACE INTO solar_flux 
+                        (date_tag, f107_obs, f107_adj)
+                        VALUES (?, ?, ?)
+                    """, (
+                        str(row['date_tag']),
+                        f107_obs,
+                        f107_adj if f107_adj else f107_obs  # Use obs if adj is missing
+                    ))
+                    
+                    if cursor.rowcount > 0:
+                        records_inserted += 1
+                        
+                except (sqlite3.Error, ValueError) as e:
+                    logger.warning(f"Failed to insert F10.7 record: {e}")
+                    
+            conn.commit()
+        
+        logger.info(f"Stored {records_inserted} F10.7 solar flux records")
         return records_inserted
     
     def get_stored_kp_data(
@@ -1331,8 +1449,8 @@ def main():
     print("    ✓ TLE database schema initialized")
     
     # Space-Track credentials
-    SPACETRACK_USER = "mohdzaidk25@gmail.com"
-    SPACETRACK_PASS = "ThisisspacetrackpassworD"
+    SPACETRACK_USER = "*******************"
+    SPACETRACK_PASS = "************************"
     
     tle_ingestor = SpaceTrackIngestor(
         username=SPACETRACK_USER,
