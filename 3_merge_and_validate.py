@@ -17,6 +17,7 @@ TARGET_SATELLITES = [
     33053,  # Fermi (Pure Drag)
     27386,  # Envisat (Heavyweight)
     25994,  # Terra (Heavyweight)
+    22803,  # SL-16 R/B (Tumbler/Ballistic) - NEW
     5,      # Vanguard 1 (Control)
     11      # Vanguard 2 (Control)
 ]

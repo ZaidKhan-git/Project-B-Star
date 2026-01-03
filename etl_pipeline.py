@@ -42,7 +42,10 @@ GOLDEN_DATASET = {
     "Envisat": 27386,      # ~770 km. A massive 8-ton dead satellite. Tumbling.
     "Terra": 25994,        # ~700 km. Large Earth observation satellite.
 
-    # --- ZONE 4: THE CONTROL GROUP (No Drag, >2000km) ---
+    # --- ZONE 4: THE "TUMBLER" (Pure Ballistic Physics, No Attitude Control) ---
+    "SL16_RocketBody": 22803,  # ~850 km. Zenit-2 rocket body. Perfect BC calibrator.
+
+    # --- ZONE 5: THE CONTROL GROUP (No Drag, >2000km) ---
     "Vanguard_1": 5,       # ~3,000 km. Oldest debris. Should show effectively ZERO drop.
     "Vanguard_2": 11       # Kept for continuity
 }
@@ -78,9 +81,9 @@ class SpaceTrackIngestor:
             password: Space-Track.org password
             db_path: SQLite database file path
         """
-        self.username = username
-        self.password = password
-        self.db_path = db_path
+        self.username = "mohdzaidk25@gmail.com"
+        self.password = "ThisisspacetrackpassworD"
+        self.db_path = "satellite_data.db"
         self.session = requests.Session()
         self._authenticated = False
         
