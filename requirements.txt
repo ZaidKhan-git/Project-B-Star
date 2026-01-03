@@ -1,0 +1,12 @@
+# Day 1: Satellite Orbital Decay ETL Pipeline Dependencies
+# =========================================================
+
+# Core data processing
+pandas>=2.0.0
+numpy>=1.24.0
+
+# HTTP requests for API access
+requests>=2.28.0
+
+# SGP4 orbital propagation
+sgp4>=2.22
