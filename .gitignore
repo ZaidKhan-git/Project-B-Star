@@ -12,9 +12,11 @@ pip-delete-this-directory.txt
 # Database
 *.db
 *.sqlite3
-
+inspect_db.py
 # Data Files (Download/regenerate via scripts)
 *.csv
+'Data Pipeline.png'
+
 # Keep only critical small data if necessary, but generally ignore large sets
 final_training_set.csv
 final_training_set_v2.csv

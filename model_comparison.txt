@@ -1,3 +1,0 @@
-Geometric Ensemble (5-fold): RMSE=51.4702, R²=0.6255
-Geometric Ensemble (5-fold): RMSE=51.4702, R²=0.6255
-Optimized Geometric (5-fold): RMSE=48.4253, R²=0.6685

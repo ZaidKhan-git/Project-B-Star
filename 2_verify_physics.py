@@ -16,7 +16,7 @@ EXPECTED RESULT:
 Negative correlation between sun_exposure_factor and decay_rate_m
 (Higher exposure → Higher drag → More negative correlation)
 
-Author: Principal Astrodynamics Engineer
+Author: Zaid Khan 
 Phase: Physics Validation (Pre-Training)
 """
 
