@@ -81,8 +81,8 @@ class SpaceTrackIngestor:
             password: Space-Track.org password
             db_path: SQLite database file path
         """
-        self.username = "mohdzaidk25@gmail.com"
-        self.password = "ThisisspacetrackpassworD"
+        self.username = "********@gmail.com"
+        self.password = "********************"
         self.db_path = "satellite_data.db"
         self.session = requests.Session()
         self._authenticated = False
