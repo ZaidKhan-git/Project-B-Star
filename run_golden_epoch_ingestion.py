@@ -9,8 +9,8 @@ sys.path.insert(0, '.')
 from etl_pipeline import SpaceTrackIngestor, GOLDEN_DATASET
 
 DB_PATH = "satellite_data.db"
-SPACETRACK_USER = "mohdzaidk25@gmail.com"
-SPACETRACK_PASS = "ThisisspacetrackpassworD"
+SPACETRACK_USER = "******@gmail.com"
+SPACETRACK_PASS = "This**********"
 
 print("=" * 60)
 print("SMART GOLDEN EPOCH TLE INGESTION")
