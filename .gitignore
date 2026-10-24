@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Database
+*.db
+*.sqlite3
+
+# Data Files (Ignore intermediate CSVs, whitelist official 2014-2025 dataset and 3 Models benchmark tables)
+*.csv
+!datafiles/2014-2025.csv
+!2014-2025.csv
+!3 Models/**/*.csv
+
+# Logs & Temporary Execution Files
+*.log
+streamlit_*.log
+
+# IDE Settings
+.vscode/
+.idea/
+
+# Environment Variables & Secrets
+.env
+.env.local
+.streamlit/secrets.toml
+secrets.toml
+
+# OS Files
+.DS_Store
+Thumbs.db

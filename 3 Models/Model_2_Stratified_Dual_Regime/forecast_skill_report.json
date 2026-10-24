@@ -1,0 +1,136 @@
+{
+  "total_evaluated_rows": 6807,
+  "satellites_evaluated": 26,
+  "per_satellite_summary": {
+    "vs_altitude_bin_mean": {
+      "median_skill": 0.7706325001394293,
+      "win_rate_percent": 96.15384615384616,
+      "satellites_won": 25
+    },
+    "vs_ridge_no_weather": {
+      "median_skill": 0.4033679833960683,
+      "win_rate_percent": 73.07692307692307,
+      "satellites_won": 19
+    },
+    "vs_persistence_lag1": {
+      "median_skill": -0.1024112729614266,
+      "mean_skill": -0.7228313895507552,
+      "win_rate_percent": 38.46153846153847,
+      "satellites_won": 10
+    }
+  },
+  "quiet_vs_storm_slices": [
+    {
+      "slice_name": "Quiet Solar Conditions (Kp_max < 4.0)",
+      "rows": 4733,
+      "satellites": 26,
+      "rmse_model": 4.631369810517729,
+      "rmse_persistence": 4.828255866475965,
+      "rmse_ridge": 14.525914566238617,
+      "rmse_altbin": 16.1539248733622,
+      "pooled_skill_vs_pers": 0.040777883650548796,
+      "median_skill_vs_pers": -0.40152219680815615,
+      "win_rate_vs_pers": 20.0
+    },
+    {
+      "slice_name": "Moderate Geomagnetic Activity (4.0 <= Kp_max < 6.0)",
+      "rows": 1711,
+      "satellites": 26,
+      "rmse_model": 5.500462743248931,
+      "rmse_persistence": 5.905267964015113,
+      "rmse_ridge": 13.243776280119285,
+      "rmse_altbin": 14.975609459087613,
+      "pooled_skill_vs_pers": 0.06854984790409868,
+      "median_skill_vs_pers": 0.08960398889487375,
+      "win_rate_vs_pers": 56.00000000000001
+    },
+    {
+      "slice_name": "Severe Geomagnetic Storms (Kp_max >= 6.0)",
+      "rows": 363,
+      "satellites": 25,
+      "rmse_model": 6.9859741719526784,
+      "rmse_persistence": 7.686842851331791,
+      "rmse_ridge": 13.178386063354557,
+      "rmse_altbin": 14.822612771510132,
+      "pooled_skill_vs_pers": 0.09117770363390254,
+      "median_skill_vs_pers": 0.08224709705448774,
+      "win_rate_vs_pers": 64.0
+    }
+  ],
+  "specific_storm_events": [
+    {
+      "event_name": "January 2026 Storm",
+      "start_date": "2026-01-19",
+      "end_date": "2026-01-22",
+      "max_kp": 8.667,
+      "samples": 100,
+      "rmse_model": 10.376058182742675,
+      "rmse_persistence": 14.02972424466416,
+      "rmse_ridge": 13.669902341644528,
+      "skill_vs_persistence": 0.2604232270146766,
+      "skill_vs_ridge": 0.24095593930231363
+    },
+    {
+      "event_name": "March 2026 Equinox Storm",
+      "start_date": "2026-03-19",
+      "end_date": "2026-03-24",
+      "max_kp": 7.0,
+      "samples": 149,
+      "rmse_model": 7.1545239717605815,
+      "rmse_persistence": 8.357459711411066,
+      "rmse_ridge": 12.963617753964009,
+      "skill_vs_persistence": 0.14393557147610603,
+      "skill_vs_ridge": 0.44810745676507824
+    },
+    {
+      "event_name": "April 2026 CME Event",
+      "start_date": "2026-04-01",
+      "end_date": "2026-04-05",
+      "max_kp": 6.333,
+      "samples": 123,
+      "rmse_model": 7.226237119203172,
+      "rmse_persistence": 6.544594178601923,
+      "rmse_ridge": 10.643333224903182,
+      "skill_vs_persistence": -0.10415358416415432,
+      "skill_vs_ridge": 0.32105507114112686
+    },
+    {
+      "event_name": "May 2026 Solar Active Period",
+      "start_date": "2026-05-03",
+      "end_date": "2026-05-16",
+      "max_kp": 6.0,
+      "samples": 333,
+      "rmse_model": 4.135448839097846,
+      "rmse_persistence": 3.4229291038697083,
+      "rmse_ridge": 15.500923726983018,
+      "skill_vs_persistence": -0.20816082180101714,
+      "skill_vs_ridge": 0.7332127483538855
+    }
+  ],
+  "regime_breakdown": {
+    "Deep LEO (<550km)": {
+      "samples": 528,
+      "satellites": 3,
+      "rmse_model": 11.918611478552155,
+      "rmse_persistence": 12.870749290036574,
+      "rmse_ridge": 32.72602852976576,
+      "rmse_altbin": 39.432503175535146,
+      "pooled_skill_vs_pers": 0.07397687500769534,
+      "pooled_skill_vs_ridge": 0.6358063592191869,
+      "median_skill_vs_pers": 0.01227342951962962,
+      "win_rate_vs_pers": 66.66666666666666
+    },
+    "Upper LEO (>=550km)": {
+      "samples": 6279,
+      "satellites": 23,
+      "rmse_model": 3.9101022718217147,
+      "rmse_persistence": 4.069483040585078,
+      "rmse_ridge": 11.261677628703827,
+      "rmse_altbin": 11.822011295371318,
+      "pooled_skill_vs_pers": 0.03916486865133839,
+      "pooled_skill_vs_ridge": 0.6527957555936761,
+      "median_skill_vs_pers": -0.1141270472154825,
+      "win_rate_vs_pers": 34.78260869565217
+    }
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "test_1_asof": {
+    "status": "PASS",
+    "history_median_skill": 0.17732133187300259,
+    "weather_median_skill": 0.1981473578482028,
+    "weather_incremental_gain": 0.02610172232568353,
+    "win_rate_vs_persistence": 100.0,
+    "win_rate_vs_history": 92.0
+  },
+  "test_2_permutation": {
+    "status": "PASS",
+    "n_runs": 1,
+    "true_gain": 0.02610172232568353,
+    "perm_mean": 0.0015,
+    "perm_std": 0.007,
+    "perm_p95": 0.0095,
+    "perm_max": 0.0111
+  },
+  "test_3_block_bootstrap": {
+    "status": "FAIL",
+    "skill_vs_pers_ci95": [
+      0.14644981103344412,
+      0.20441254913551216,
+      0.2819841993079776
+    ],
+    "weather_gain_over_history_ci95": [
+      -0.0010660753762977036,
+      0.030760024334502034,
+      0.06986106433296164
+    ]
+  },
+  "final_verdict": "INCONCLUSIVE (Test 3 interval includes 0)"
+}

@@ -1,0 +1,87 @@
+{
+  "model_name": "XGBoost LEO Orbital Decay Model",
+  "domain": "Low Earth Orbit (<= 1,000 km)",
+  "target": "decay_rate_m",
+  "features": [
+    "sun_exposure_factor",
+    "beta_angle_deg",
+    "f107_obs",
+    "f107_81d_avg",
+    "Kp_mean",
+    "Kp_max",
+    "Kp_min",
+    "Kp_std",
+    "Kp_Lag_3h",
+    "Kp_Lag_6h",
+    "Kp_Lag_12h",
+    "Kp_Lag_24h",
+    "Kp_Roll_24h_Mean",
+    "Kp_Roll_24h_Std",
+    "Kp_Roll_72h_Mean",
+    "semi_major_axis_km",
+    "altitude_km",
+    "perigee_alt_km",
+    "eccentricity",
+    "inclination_deg",
+    "sin_doy",
+    "cos_doy",
+    "static_bc_est"
+  ],
+  "feature_count": 23,
+  "train_cutoff": "2023-01-01",
+  "val_cutoff": "2024-01-01",
+  "seeds": [
+    42,
+    100,
+    999,
+    2024,
+    1337
+  ],
+  "champion_seed": 1337,
+  "ensemble_validation_r2": 0.6067844034714294,
+  "ensemble_validation_rmse": 44.57267272555534,
+  "ensemble_test_r2": 0.5723673856991547,
+  "ensemble_test_rmse": 53.366082748627136,
+  "model_stats": [
+    {
+      "seed": 42,
+      "best_iteration": 190,
+      "val_rmse": 45.00557638088338,
+      "val_r2": 0.5991092475925823,
+      "test_rmse": 53.76921713768086,
+      "test_r2": 0.5658821971666992
+    },
+    {
+      "seed": 100,
+      "best_iteration": 150,
+      "val_rmse": 44.848656957058495,
+      "val_r2": 0.6018999185327684,
+      "test_rmse": 53.51980968963231,
+      "test_r2": 0.5699001505552554
+    },
+    {
+      "seed": 999,
+      "best_iteration": 129,
+      "val_rmse": 46.763913179422644,
+      "val_r2": 0.5671722736921458,
+      "test_rmse": 55.9814065672852,
+      "test_r2": 0.5294261582299145
+    },
+    {
+      "seed": 2024,
+      "best_iteration": 150,
+      "val_rmse": 44.81137367701836,
+      "val_r2": 0.6025615351097007,
+      "test_rmse": 53.30133088410626,
+      "test_r2": 0.5734044942449246
+    },
+    {
+      "seed": 1337,
+      "best_iteration": 153,
+      "val_rmse": 43.844053514708264,
+      "val_r2": 0.6195349391358025,
+      "test_rmse": 52.69958088269497,
+      "test_r2": 0.5829822965916925
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "altitude_threshold_km": 550.0,
+  "deep_scale": 0.5438591967955754,
+  "deep_bias": -31.684698638993723,
+  "upper_scale": 0.6948596963015821,
+  "upper_bias": -3.436460152399511
+}
