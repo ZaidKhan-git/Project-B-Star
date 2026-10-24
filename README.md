@@ -15,7 +15,7 @@
 
 > **Central Investigation:** *Can publicly available Two-Line Element (TLE) tracking data and planetary space-weather indices ($K_p$, $F_{10.7}$) reliably forecast atmospheric drag and orbital decay for Low Earth Orbit (LEO, $\le 1,000\text{ km}$) satellites, or is an operator strictly better off relying on simple persistence?*
 
-**Project B-Star** is an experimental machine learning and astrodynamics research platform developed to rigorously test the predictive ceiling of open space-tracking data. By ingesting over 450,000 TLEs from Space-Track.org across 65 diverse orbital objects and coupling them with geomagnetic ($K_p$) and solar radio flux ($F_{10.7}$) archives from GFZ Potsdam and Penticton Observatory, we tracked the evolution of decay modeling across three generations of machine learning architectures.
+**Project B-Star** is an experimental machine learning and astrodynamics research project developed to rigorously test the predictive ceiling of open space-tracking data. By ingesting over 450,000 TLEs from Space-Track.org across 65 diverse orbital objects and coupling them with geomagnetic ($K_p$) and solar radio flux ($F_{10.7}$) archives from GFZ Potsdam and Penticton Observatory, we tracked the evolution of decay modeling across three generations of machine learning architectures.
 
 Through systematic benchmarking against lazy baselines (1-day persistence, altitude-bin means, and unweathered Ridge ablations), this project uncovered fundamental data traps—such as **same-day weather leakage (nowcasting masquerading as forecasting)** and **loss distortion across altitude scales**—and formulated a **physically-motivated multiplicative log-ratio innovation architecture (named "B *")** that overcomes them.
 
